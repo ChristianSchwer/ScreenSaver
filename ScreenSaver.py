@@ -3,18 +3,18 @@ from tkinter.ttk import *
 from time import *
 from datetime import *
 from PIL import Image, ImageTk
+import keyboard
+import mouse
+
+last_input = datetime.now()
+lastPosition = mouse.get_position()
 
 class Fullscreen:
     def __init__(self):
         self.window = Tk()
         self.window.attributes('-fullscreen', True)
         self.fullScreenState = False
-        self.window.bind("<F11>", self.toggle_fullscreen)
-        self.window.bind("<Escape>",self.quitFullScreen)
-        self.window.bind("<Button-1>", self.quitFullScreen)
-        self.window.bind("<Button-2>", self.quitFullScreen)
-        self.window.bind("<Button-3>", self.quitFullScreen)
-        self.window.bind("<Motion>", self.quitFullScreen)
+        UserInput(self)
 
         #Get screen resolutions
         screen_width = self.window.winfo_screenwidth()
@@ -53,19 +53,45 @@ class Fullscreen:
         #End date for the timer
         end_Date = datetime(year=2025, month=1, day=1, hour=0, minute=0, second=0)
 
-        update(canvas, 0, animationObj, frames, frameCnt)
+        Update(canvas, 0, animationObj, frames, frameCnt)
         Countdown(canvas, end_Date, timerObj)
-        time(canvas, timeObj)
+        Time(canvas, timeObj)
+
         self.window.mainloop()
 
-    def toggle_fullscreen(self, event):
-        self.fullScreenState = True  # Just toggling the boolean
-        self.window.attributes("-fullscreen", self.fullScreenState)
+def QuitFullScreen(self):
+    self.fullScreenState = False   #   only minimize
+    self.window.attributes("-fullscreen", self.fullScreenState)    #   only minimize
+    global last_input
+    last_input = datetime.now()
+    FullScreen(self)
 
-    def quitFullScreen(self, event):
-        self.fullScreenState = False   #   only minimize
-        self.window.attributes("-fullscreen", self.fullScreenState)    #   only minimize
-        #self.window.destroy()      #-  close window
+def UserInput(self):
+    global lastPosition
+    currentPosition = mouse.get_position()
+    if (keyboard.is_pressed("space") or keyboard.is_pressed("enter") or keyboard.is_pressed("q")
+     or keyboard.is_pressed("w") or keyboard.is_pressed("e") or keyboard.is_pressed("r")
+     or keyboard.is_pressed("t") or keyboard.is_pressed("z") or keyboard.is_pressed("u")
+     or keyboard.is_pressed("i") or keyboard.is_pressed("o") or keyboard.is_pressed("p")
+     or keyboard.is_pressed("a") or keyboard.is_pressed("s") or keyboard.is_pressed("d")
+     or keyboard.is_pressed("f") or keyboard.is_pressed("g") or keyboard.is_pressed("h")
+     or keyboard.is_pressed("j") or keyboard.is_pressed("k") or keyboard.is_pressed("l")
+     or keyboard.is_pressed("y") or keyboard.is_pressed("x") or keyboard.is_pressed("c")
+     or keyboard.is_pressed("v") or keyboard.is_pressed("b") or keyboard.is_pressed("n")
+     or keyboard.is_pressed("m") or keyboard.is_pressed("ü") or keyboard.is_pressed("ä")
+     or keyboard.is_pressed("ö") or keyboard.is_pressed(",") or keyboard.is_pressed(".")
+     or keyboard.is_pressed("-") or keyboard.is_pressed("#") or keyboard.is_pressed("+")):
+        QuitFullScreen(self)
+    if (mouse.is_pressed("right")):
+        QuitFullScreen(self)
+    if (mouse.is_pressed("middle")):
+        QuitFullScreen(self)
+    if (mouse.is_pressed("left")):
+        QuitFullScreen(self)
+    if (currentPosition != lastPosition):
+        lastPosition = mouse.get_position()
+        QuitFullScreen(self)
+    self.window.after(100, UserInput, self)
 
 def Countdown(canvas, end_Date, timerObj):
     now = datetime.now()
@@ -81,18 +107,26 @@ def Countdown(canvas, end_Date, timerObj):
         canvas.itemconfigure(timerObj, text = text)
         canvas.after(1000, Countdown, canvas, end_Date, timerObj)
 
-def time(canvas, timeObj):
+def Time(canvas, timeObj):
     string = strftime('%H:%M:%S')
     canvas.itemconfigure(timeObj, text = string)
-    canvas.after(1000, time, canvas, timeObj)
+    canvas.after(1000, Time, canvas, timeObj)
 
-def update(canvas, ind, gif, frames, frameCnt):
+def Update(canvas, ind, gif, frames, frameCnt):
     frame = frames[ind]
     ind += 1
     if ind == frameCnt:
         ind = 0
     canvas.itemconfigure(gif, image=frame)
-    canvas.after(100, update, canvas, ind, gif, frames, frameCnt)
+    canvas.after(100, Update, canvas, ind, gif, frames, frameCnt)
+
+def FullScreen(self):
+    current_time = datetime.now()
+    inactivityTime = current_time - last_input
+    if (inactivityTime.seconds > 5):
+        self.fullScreenState = True  # Just toggling the boolean
+        self.window.attributes("-fullscreen", self.fullScreenState)
+    self.window.after(1000, FullScreen, self)
 
 if __name__ == '__main__':
     app = Fullscreen()

@@ -5,15 +5,25 @@ from datetime import *
 from PIL import Image, ImageTk
 import keyboard
 import mouse
+#from Xlib import X, display
+#from Xlib.ext import randr
 
 last_input = datetime.now()
 lastPosition = mouse.get_position()
+'''
+d = display.Display()
+s = d.screen()
+xwindow = s.root.create_window(0,0,1,1,1,s.root_depth)
 
+res = randr.get_screen_resources(xwindow)
+for mode in res.modes:
+    w, h = mode.width, mode.height
+    print("width: {}, height: {}".format(w,h))
+'''
 class Fullscreen:
     def __init__(self):
         self.window = Tk()
         self.window.attributes('-fullscreen', True)
-        self.fullScreenState = False
         UserInput(self)
 
         #Get screen resolutions
@@ -56,12 +66,16 @@ class Fullscreen:
         Update(canvas, 0, animationObj, frames, frameCnt)
         Countdown(canvas, end_Date, timerObj)
         Time(canvas, timeObj)
+        CreateWindow(self)
 
-        self.window.mainloop()
+        self.window.mainloop
+
+def CreateWindow(self):
+    t = Toplevel(self.window)
+    t.mainloop()
 
 def QuitFullScreen(self):
-    self.fullScreenState = False   #   only minimize
-    self.window.attributes("-fullscreen", self.fullScreenState)    #   only minimize
+    self.window.withdraw()
     global last_input
     last_input = datetime.now()
     FullScreen(self)
@@ -97,7 +111,7 @@ def Countdown(canvas, end_Date, timerObj):
     now = datetime.now()
     years = end_Date.year - now.year - ((end_Date.month, end_Date.day) < (now.month, now.day))
     months =  11 - (now.month - end_Date.month)
-    days = 27 - (now.day - end_Date.day)
+    days = 30 - (now.day - end_Date.day)
     hours = 23 - now.hour - end_Date.hour
     minutes = 59 - now.minute - end_Date.minute
     seconds = 60 - now.second - end_Date.second
@@ -124,8 +138,7 @@ def FullScreen(self):
     current_time = datetime.now()
     inactivityTime = current_time - last_input
     if (inactivityTime.seconds > 5):
-        self.fullScreenState = True  # Just toggling the boolean
-        self.window.attributes("-fullscreen", self.fullScreenState)
+        self.window.deiconify()
     self.window.after(1000, FullScreen, self)
 
 if __name__ == '__main__':

@@ -5,16 +5,22 @@ from datetime import *
 from PIL import Image, ImageTk
 import keyboard
 import mouse
-#from Xlib import X, display
-#from Xlib.ext import randr
+import ctypes
 
 last_input = datetime.now()
 lastPosition = mouse.get_position()
 
 class GUI:
     def __init__(self):
+        #check if more than one monitor
+        user32 = ctypes.windll.user32
+        width1 = user32.GetSystemMetrics(0)
+        height1 = user32.GetSystemMetrics(1)
+        width2 = user32.GetSystemMetrics(78)
+        height2 = user32.GetSystemMetrics(79)
+
         gui = Tk()
-        gui.geometry("600x400")
+        gui.geometry("600x400")#'%sx%s+%s+%s'%(width1,height1,-width1,0))
 
         #GUI enteries
         canvasG = Canvas(gui, width = 600, height = 400)
@@ -23,7 +29,7 @@ class GUI:
         #Enable picture
         enableP = IntVar()
         CheckP = Checkbutton(gui, text='Picture',variable=enableP, onvalue=1, offvalue=0)
-        canvasG.create_window(50, 25, window = CheckP)
+        canvasG.create_window(37, 25, window = CheckP)
 
         labelP = Label(gui, text='Enter picture filename')
         labelP.config(font=('helvetica', 14))
@@ -35,7 +41,7 @@ class GUI:
         #Enable animation
         enableA = IntVar()
         CheckA = Checkbutton(gui, text='Animation',variable=enableA, onvalue=1, offvalue=0)
-        canvasG.create_window(50, 100, window = CheckA)
+        canvasG.create_window(46, 100, window = CheckA)
 
         labelA = Label(gui, text='Enter animation filename')
         labelA.config(font=('helvetica', 14))
@@ -47,7 +53,7 @@ class GUI:
         #Enable Time
         enableT = IntVar()
         CheckT = Checkbutton(gui, text='Time',variable=enableT, onvalue=1, offvalue=0)
-        canvasG.create_window(50, 175, window = CheckT)
+        canvasG.create_window(31, 175, window = CheckT)
 
         #Enable Countdown
         enableC = IntVar()
@@ -61,20 +67,23 @@ class GUI:
         endDateEntry = Entry(gui)
         canvasG.create_window(300, 250, window = endDateEntry)
 
-        def CreateScreenSaver():
-            scs = Toplevel(gui)
-            scs.attributes('-fullscreen',True)
+        labelI = Label(gui, text='Enter inaktive time in seconds')
+        labelI.config(font=('helvetica', 14))
+        canvasG.create_window(300, 300, window = labelI)
+
+        inaktiveTimeEntry = Entry(gui)
+        canvasG.create_window(72, 300, window = inaktiveTimeEntry)
+
+        def CreateScreenSaver(window, picturefilename, animationfilename, inaktiveTime):
 
             #Get screen resolutions
-            screen_width = scs.winfo_screenwidth()
-            screen_height = scs.winfo_screenheight()
+            screen_width = window.winfo_screenwidth()
+            screen_height = window.winfo_screenheight()
 
             #Create Canvas
-            canvas = Canvas(scs, width = 1020, height = 1080)
+            canvas = Canvas(window, width = screen_width, height = screen_height)
             canvas.pack(fill = "both", expand = True)
 
-            picturefilename = picturefile.get()
-            animationfilename = animationfile.get()
             #End date for the timer
             endDate = endDateEntry.get()
             if (endDate == ""):
@@ -93,9 +102,11 @@ class GUI:
                 else:
                     #Add image file
                     filename = "D:\Privat\Bilder\IMG_3750.JPG"
+                    print(filename)
                     background_image = Image.open(filename)
                     background_image = background_image.resize((screen_width, screen_height), Image.ANTIALIAS)
                     background_image = ImageTk.PhotoImage(background_image)
+                    print(background_image)
                     canvas.create_image(0, 0, image = background_image, anchor = "nw")
 
             if (enableA.get() == 1):
@@ -132,7 +143,8 @@ class GUI:
                     animationObj = canvas.create_image(0, 0, image = frames[0], anchor = "nw")
                     Animation(canvas, 0, animationObj, frames, frameCnt)
 
-            UserInput(scs)
+            if (inaktiveTime == ""):
+                inaktiveTime = 59;
 
             if (enableC.get() == 1):
                 timerObj = canvas.create_text((screen_width/2, screen_height/2), font = ('calibri', 30, 'bold'), fill = 'white', text = '')
@@ -141,19 +153,37 @@ class GUI:
                 timeObj = canvas.create_text((screen_width/2, screen_height/4), font = ('calibri', 30, 'bold'), fill = 'white', text = '')
                 Time(canvas, timeObj)
 
-            scs.mainloop()
+        def InitialiseScreenSaver():
+            picturefilename = picturefile.get()
+            animationfilename = animationfile.get()
+            inaktiveTime = inaktiveTimeEntry.get()
+            gui.withdraw()
+            scs = Toplevel()
+            scs.attributes("-fullscreen",True)
+            CreateScreenSaver(scs, picturefilename, animationfilename, inaktiveTime)
+            if (width2 != width1):
+                sMscs = Toplevel(bg = "black")
+                sMscs.geometry('%sx%s+%s+%s'%(1295,height1,-1550,0))
+                sMscs.overrideredirect(True)
+                UserInput(gui, scs, sMscs, inaktiveTime)
+            else:
+                sMscs = None
+                UserInput(gui, scs, sMscs, inaktiveTime)
 
-        activateScreenSaver = Button(gui, text="erstellen", command = CreateScreenSaver)
+        activateScreenSaver = Button(gui, text="erstellen", command = InitialiseScreenSaver)
         canvasG.create_window(300, 380, window=activateScreenSaver)
         gui.mainloop()
 
-def QuitFullScreen(scs):
+def QuitFullScreen(scs, sMscs, inaktiveTime):
     scs.withdraw()
+    sMscs.withdraw()
     global last_input
     last_input = datetime.now()
-    FullScreen(scs)
+    FullScreen(scs, sMscs, inaktiveTime)
 
-def UserInput(scs):
+def UserInput(gui, scs, sMscs, inaktiveTime):
+    if (keyboard.is_pressed("~")):
+        gui.deiconify()
     global lastPosition
     currentPosition = mouse.get_position()
     if (keyboard.is_pressed("space") or keyboard.is_pressed("enter") or keyboard.is_pressed("q")
@@ -168,17 +198,17 @@ def UserInput(scs):
      or keyboard.is_pressed("m") or keyboard.is_pressed("ü") or keyboard.is_pressed("ä")
      or keyboard.is_pressed("ö") or keyboard.is_pressed(",") or keyboard.is_pressed(".")
      or keyboard.is_pressed("-") or keyboard.is_pressed("#") or keyboard.is_pressed("+")):
-        QuitFullScreen(scs)
+        QuitFullScreen(scs, sMscs, inaktiveTime)
     if (mouse.is_pressed("right")):
-        QuitFullScreen(scs)
+        QuitFullScreen(scs, sMscs, inaktiveTime)
     if (mouse.is_pressed("middle")):
-        QuitFullScreen(scs)
+        QuitFullScreen(scs, sMscs, inaktiveTime)
     if (mouse.is_pressed("left")):
-        QuitFullScreen(scs)
+        QuitFullScreen(scs, sMscs, inaktiveTime)
     if (currentPosition != lastPosition):
         lastPosition = mouse.get_position()
-        QuitFullScreen(scs)
-    scs.after(100, UserInput, scs)
+        QuitFullScreen(scs, sMscs, inaktiveTime)
+    scs.after(100, UserInput, gui, scs, sMscs, inaktiveTime)
 
 def Countdown(canvas, end_Date, timerObj):
     now = datetime.now()
@@ -207,12 +237,13 @@ def Animation(canvas, ind, gif, frames, frameCnt):
     canvas.itemconfigure(gif, image=frame)
     canvas.after(100, Animation, canvas, ind, gif, frames, frameCnt)
 
-def FullScreen(scs):
+def FullScreen(scs, sMscs, inaktiveTime):
     current_time = datetime.now()
     inactivityTime = current_time - last_input
-    if (inactivityTime.seconds > 5):
+    if (inactivityTime.seconds > int(inaktiveTime)-1):
         scs.deiconify()
-    scs.after(1000, FullScreen, scs)
+        sMscs.deiconify()
+    scs.after(1000, FullScreen, scs, sMscs, inaktiveTime)
 
 if __name__ == '__main__':
     app = GUI()

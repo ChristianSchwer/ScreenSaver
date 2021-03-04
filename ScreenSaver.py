@@ -74,14 +74,19 @@ class GUI:
         inaktiveTimeEntry = Entry(gui)
         canvasG.create_window(72, 300, window = inaktiveTimeEntry)
 
-        def CreateScreenSaver(window, picturefilename, animationfilename, inaktiveTime):
-
+        def InitialiseScreenSaver():
+            picturefilename = picturefile.get()
+            animationfilename = animationfile.get()
+            inaktiveTime = inaktiveTimeEntry.get()
+            gui.withdraw()
+            scs = Toplevel()
+            scs.attributes("-fullscreen",True)
             #Get screen resolutions
-            screen_width = window.winfo_screenwidth()
-            screen_height = window.winfo_screenheight()
+            screen_width = scs.winfo_screenwidth()
+            screen_height = scs.winfo_screenheight()
 
             #Create Canvas
-            canvas = Canvas(window, width = screen_width, height = screen_height)
+            canvas = Canvas(scs, width = screen_width, height = screen_height)
             canvas.pack(fill = "both", expand = True)
 
             #End date for the timer
@@ -99,15 +104,15 @@ class GUI:
                     background_image = background_image.resize((screen_width, screen_height), Image.ANTIALIAS)
                     background_image = ImageTk.PhotoImage(background_image)
                     canvas.create_image(0, 0, image = background_image, anchor = "nw")
+                    Picture(canvas, background_image)
                 else:
                     #Add image file
                     filename = "D:\Privat\Bilder\IMG_3750.JPG"
-                    print(filename)
                     background_image = Image.open(filename)
                     background_image = background_image.resize((screen_width, screen_height), Image.ANTIALIAS)
                     background_image = ImageTk.PhotoImage(background_image)
-                    print(background_image)
                     canvas.create_image(0, 0, image = background_image, anchor = "nw")
+                    Picture(canvas, background_image)
 
             if (enableA.get() == 1):
                 if (animationfilename != ""):
@@ -153,23 +158,14 @@ class GUI:
                 timeObj = canvas.create_text((screen_width/2, screen_height/4), font = ('calibri', 30, 'bold'), fill = 'white', text = '')
                 Time(canvas, timeObj)
 
-        def InitialiseScreenSaver():
-            picturefilename = picturefile.get()
-            animationfilename = animationfile.get()
-            inaktiveTime = inaktiveTimeEntry.get()
-            gui.withdraw()
-            scs = Toplevel()
-            scs.attributes("-fullscreen",True)
-            CreateScreenSaver(scs, picturefilename, animationfilename, inaktiveTime)
             if (width2 != width1):
-                sMscs = Toplevel(bg = "black")
+                sMscs = Toplevel(bg = 'black')
                 sMscs.geometry('%sx%s+%s+%s'%(1295,height1,-1550,0))
                 sMscs.overrideredirect(True)
                 UserInput(gui, scs, sMscs, inaktiveTime)
             else:
                 sMscs = None
                 UserInput(gui, scs, sMscs, inaktiveTime)
-
         activateScreenSaver = Button(gui, text="erstellen", command = InitialiseScreenSaver)
         canvasG.create_window(300, 380, window=activateScreenSaver)
         gui.mainloop()
@@ -214,7 +210,12 @@ def Countdown(canvas, end_Date, timerObj):
     now = datetime.now()
     years = end_Date.year - now.year - ((end_Date.month, end_Date.day) < (now.month, now.day))
     months =  11 - (now.month - end_Date.month)
-    days = 30 - (now.day - end_Date.day)
+    if (now.month == 1 or 3 or 5 or 7 or 8 or 10 or 12):
+        days = 30 - (now.day - end_Date.day)
+    else:
+        days = 29 - (now.day - end_Date.day)
+    if (now.month == 2):
+        days = 27 - (now.day - end_Date.day)
     hours = 23 - now.hour - end_Date.hour
     minutes = 59 - now.minute - end_Date.minute
     seconds = 60 - now.second - end_Date.second
@@ -228,6 +229,9 @@ def Time(canvas, timeObj):
     string = strftime('%H:%M:%S')
     canvas.itemconfigure(timeObj, text = string)
     canvas.after(1000, Time, canvas, timeObj)
+
+def Picture(canvas, background_image):
+    canvas.after(1000, Picture, canvas, background_image)
 
 def Animation(canvas, ind, gif, frames, frameCnt):
     frame = frames[ind]
